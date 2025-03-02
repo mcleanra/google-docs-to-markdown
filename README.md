@@ -26,6 +26,7 @@ jobs:
         with:
           google_drive_folder_id: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
           google_drive_query: "(mimeType = 'application/vnd.google-apps.document' or mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')"
+          recursive: true
 ```
 
 ## Inputs
@@ -46,3 +47,7 @@ Directory path to output files.
 ### `google_drive_query`
 
 A where clause appended to the files.list query that can be used to select specific types of files from Google Drive.
+
+### `recursive`
+
+Export markdown from subfolders also, preserving the folder structure
