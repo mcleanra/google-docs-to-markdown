@@ -66,7 +66,7 @@ function getFolderPaths({folders, rootPath, rootFolderId}) {
     
     // If it's the root, reverse and trim the trailing slash
     if (id === rootFolderId) {
-      const trimmedPath = currentPath.split('/').reverse().join('/').trim('/');
+      const trimmedPath = currentPath.trim('/').split('/').reverse().join('/').trim('/');
       return trimmedPath;
     }
     
