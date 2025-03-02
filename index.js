@@ -64,9 +64,9 @@ function getFolderPaths({folders, rootPath, rootFolderId}) {
     // Add the current folder's name to the path
     currentPath += folder.name + '/';
     
-    // If it's the root, reverse and trim the trailing slash
+    // If it's the root, reverse and slice the beginning slash
     if (id === rootFolderId) {
-      const trimmedPath = currentPath.trim('/').split('/').reverse().join('/').trim('/');
+      const trimmedPath = currentPath.split('/').reverse().join('/').trim().slice(1);
       return trimmedPath;
     }
     
