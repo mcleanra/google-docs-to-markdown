@@ -111,11 +111,7 @@ function getFileContents({ drive, fileId }) {
       fileId,
       alt: 'media'
     })    
-    .then(response => response.data)
-    .then(async data => {
-      let text = await new Response(data).text();
-      return text;
-    });
+    .then(response => response.data);
 }
 
 async function exportFiles({ drive, files, auth }) {
@@ -130,7 +126,8 @@ async function exportFiles({ drive, files, auth }) {
           content = "";
         }
         else if( file.fileExtension === "json") {
-          content = await getFileContents({drive, fileId: file.id});
+          const json = await getFileContents({drive, fileId: file.id});
+          content = JSON.stringify(json, null, 2);
         } else {
           content = await getFileContentsAsMarkdown(file.id, auth);
         }
