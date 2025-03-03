@@ -41,7 +41,7 @@ async function main({ googleDriveFolderId, outputDirectoryPath, googleDriveQuery
   }
 
   // write files to the path of their parent if applicable
-  const exportedFiles = await exportFiles({ files, auth });
+  const exportedFiles = await exportFiles({ drive, files, auth });
   await writeExportedFiles({ exportedFiles, directories, recursive, googleDriveFolderId });
 }
 
@@ -106,22 +106,41 @@ async function getFileContentsAsMarkdown(fileId, auth) {
     });
 }
 
-async function exportFiles({ files, auth }) {
+function getFileContents({ drive, fileId }) {
+  return drive.files.get({
+      fileId,
+      alt: 'media'
+    })    
+    .then(response => response.data)
+    .then(async data => {
+      let text = await new Response(data).text();
+      return text;
+    });
+}
+
+async function exportFiles({ drive, files, auth }) {
   return Promise.all(
     files.map(async (file) => {
       console.log("Exporting", file.name);
+      let content = "";
       try {
-        const content = await getFileContentsAsMarkdown(file.id, auth);
-        return {
-          ...file,
-          content,
-        };
+        if( file.mimeType !== "application/vnd.google-apps.document" 
+            && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+            && file.fileExtension !== "json") {
+          content = "";
+        }
+        else if( file.fileExtension === "json") {
+          content = await getFileContents({drive, fileId: file.id});
+        } else {
+          content = await getFileContentsAsMarkdown(file.id, auth);
+        }
       } catch (err) {
         console.log("Could not export", file.name);
         console.log(err);
+      } finally {
         return {
           ...file,
-          content: ""
+          content
         }
       }
     })
@@ -157,10 +176,17 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
 
     // remove the file extension from the name of the file if applicable.  google docs have no file extension
     let fileName = exportedFile.name;
-    if( exportedFile.fileExtension ) {
-      fileName = fileName.replace(`.${exportedFile.fileExtension}`, ``);
+    if( exportedFile.mimeType === "application/vnd.google-apps.document" ) {
+      fileName = `${fileName}.md`;
     }
-    const filePath = `${directories[parentFolderId]}/${fileName}.md`
+    else if (exportedFile.fileExtension === "json") {
+      // don't change the file name
+    }
+    else if( exportedFile.fileExtension ) {
+      fileName = fileName.replace(`.${exportedFile.fileExtension}`, ``);
+      fileName = `${fileName}.md`;
+    }
+    const filePath = `${directories[parentFolderId]}/${fileName}`
     if( exportedFile.content !== "") {
       await fsPromises.writeFile(
         filePath,
