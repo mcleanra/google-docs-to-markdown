@@ -1,6 +1,6 @@
 # google-docs-to-markdown
 
-Custom action to export Google Docs to local file system as Markdown files.
+Custom action to export Google Docs to local file system as Markdown files.  Does some extra custom stuff to build out a Docusaurus site
 
 ## Usage
 

@@ -123,12 +123,19 @@ async function exportFiles({ drive, files, auth }) {
         if( file.mimeType !== "application/vnd.google-apps.document" 
             && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
             && file.fileExtension !== "json") {
+          // if it isn't a word document or a json file, skip
+          content = "";
+        }
+        else if ( file.name.startsWith(`~`)) {
+          // temporary files, skip
           content = "";
         }
         else if( file.fileExtension === "json") {
+          // json files, get the raw content
           const json = await getFileContents({drive, fileId: file.id});
           content = JSON.stringify(json, null, 2);
         } else {
+          // word docs and google docs can be exported as markdown
           content = await getFileContentsAsMarkdown(file.id, auth);
         }
       } catch (err) {
@@ -165,6 +172,23 @@ async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   return response.data.files;
 }
 
+function formatFrontMatter(fileId, fileContentString) {
+  let fileContents = fileContentString;
+  const pattern = /\$\$\$.*?\$\$\$/s;
+  const frontMatterBlocks = fileContents.match(pattern);
+
+  if( frontMatterBlocks ) {
+    let frontMatterBlockFormatted = frontMatterBlocks[0]
+      .replace(`$$$`, `---`) // in google docs our front matter blocks are enclosed by $$$ instead of ---
+      .replace(/\\/g, ``) // within this block we also want to remove any escaping \ that google docs has inserted
+      .replace(`$$$`, `google-docs-id: ${fileId}\n---`); // add this property at the end of the front matter
+    fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
+  } else {
+    fileContents = `---\ngoogle-docs-id: ${fileId}\n---\n` + fileContentString; // if there's no existing block, add one
+  }
+  return fileContents;
+}
+
 async function writeExportedFiles({ exportedFiles, directories, recursive, googleDriveFolderId }) {
   exportedFiles.forEach(async (exportedFile) => {
 
@@ -185,6 +209,9 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
     }
     const filePath = `${directories[parentFolderId]}/${fileName}`
     if( exportedFile.content !== "") {
+      if( fileName.endsWith(".md") ) {
+        exportedFile.content = formatFrontMatter(exportedFile.id, exportedFile.content);
+      }
       await fsPromises.writeFile(
         filePath,
         exportedFile.content
