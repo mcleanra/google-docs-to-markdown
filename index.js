@@ -182,7 +182,7 @@ function formatFrontMatter(fileId, fileContentString) {
       .replace(`$$$`, `---`) // in google docs our front matter blocks are enclosed by $$$ instead of ---
       .replace(/\\/g, ``) // within this block we also want to remove any escaping \ that google docs has inserted
       .replace(`$$$`, `google-docs-id: ${fileId}\n---`); // add this property at the end of the front matter
-    fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
+    fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
     fileContents = `---\ngoogle-docs-id: ${fileId}\n---\n` + fileContentString; // if there's no existing block, add one
   }
