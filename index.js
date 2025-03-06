@@ -184,7 +184,7 @@ function formatFrontMatter(fileId, fileContentString) {
       .replace(`$$$`, `${frontMatterPropsToAdd}\n---`); 
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
-    fileContents = `---\n${frontMatterPropsToAdd}\n---` + fileContentString; // if there's no existing block, add one
+    fileContents = `---\n${frontMatterPropsToAdd}\n---\n` + fileContentString; // if there's no existing block, add one
   }
   console.log(frontMatterPropsToAdd);
   return fileContents;
