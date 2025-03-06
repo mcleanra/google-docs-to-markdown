@@ -397816,16 +397816,17 @@ function formatFrontMatter(fileId, fileContentString) {
   let fileContents = fileContentString;
   const pattern = /\$\$\$.*?\$\$\$/s;
   const frontMatterBlocks = fileContents.match(pattern);
-
+  const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit`
   if( frontMatterBlocks ) {
     let frontMatterBlockFormatted = frontMatterBlocks[0]
       .replace(`$$$`, `---`) // in google docs our front matter blocks are enclosed by $$$ instead of ---
       .replace(/\\/g, ``) // within this block we also want to remove any escaping \ that google docs has inserted
-      .replace(`$$$`, `google-docs-id: ${fileId}\n---`); // add this property at the end of the front matter
+      .replace(`$$$`, `${frontMatterPropsToAdd}\n---`); 
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
-    fileContents = `---\ngoogle-docs-id: ${fileId}\n---\n` + fileContentString; // if there's no existing block, add one
+    fileContents = `---\n${frontMatterPropsToAdd}\n---` + fileContentString; // if there's no existing block, add one
   }
+  console.log(frontMatterPropsToAdd);
   return fileContents;
 }
 
