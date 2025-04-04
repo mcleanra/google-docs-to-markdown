@@ -172,21 +172,42 @@ async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   return response.data.files;
 }
 
+/*
+* Google Docs supports a limited version of Markdown and inserts \ to escape special characters.  We want to be able to define
+* a block inside our Google Doc where Markdown can be post-processed to remove Google's escape characters so that we can use things
+* like React components and multiline code blocks with ```
+*/
+function unescapeBlocks(fileContentString) {
+  let fileContents = fileContentString;
+  const pattern = /^\$\$\$.*?\$\$\$/gs; // match all unescape blocks surrounded by $$$
+  const unescapeBlocks = fileContents.match(pattern);
+  if( unescapeBlocks ) {
+    for (let block of unescapeBlocks) {
+      let unescapedBlock = block
+        .replace(/\\/g, ``) // remove all the escaping \ that google has inserted
+        .replace(/^\$\$\$.*?$\n?/gm, ``); // remove any line that starts with $$$
+      fileContents = fileContents.replace(block, unescapedBlock);
+      console.log(unescapedBlock);
+    }
+  }
+  return fileContents;
+}
+
+/*
+* Insert the Google Doc Id into the front matter block so our "Edit this page" links work correctly
+*/
 function formatFrontMatter(fileId, fileContentString) {
   let fileContents = fileContentString;
-  const pattern = /\$\$\$.*?\$\$\$/s;
+  const pattern = /---.*?---/s;
   const frontMatterBlocks = fileContents.match(pattern);
   const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit`
   if( frontMatterBlocks ) {
     let frontMatterBlockFormatted = frontMatterBlocks[0]
-      .replace(`$$$`, `---`) // in google docs our front matter blocks are enclosed by $$$ instead of ---
-      .replace(/\\/g, ``) // within this block we also want to remove any escaping \ that google docs has inserted
-      .replace(`$$$`, `${frontMatterPropsToAdd}\n---`); 
+      .replace(`---`, `---\n${frontMatterPropsToAdd}\n`); 
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
     fileContents = `---\n${frontMatterPropsToAdd}\n---\n` + fileContentString; // if there's no existing block, add one
   }
-  console.log(frontMatterPropsToAdd);
   return fileContents;
 }
 
@@ -211,6 +232,7 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
     const filePath = `${directories[parentFolderId]}/${fileName}`
     if( exportedFile.content !== "") {
       if( fileName.endsWith(".md") ) {
+        exportedFile.content = unescapeBlocks(exportedFile.content);
         exportedFile.content = formatFrontMatter(exportedFile.id, exportedFile.content);
       }
       await fsPromises.writeFile(
