@@ -179,7 +179,7 @@ async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
 */
 function unescapeBlocks(fileContentString) {
   let fileContents = fileContentString;
-  const pattern = /^\$\$\$.*?\$\$\$/gs; // match all unescape blocks surrounded by $$$
+  const pattern = /\$\$\$.*?\$\$\$/gs; // match all unescape blocks surrounded by $$$
   const unescapeBlocks = fileContents.match(pattern);
   if( unescapeBlocks ) {
     for (let block of unescapeBlocks) {
