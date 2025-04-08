@@ -179,7 +179,7 @@ async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
 */
 function unescapeBlocks(fileContentString) {
   let fileContents = fileContentString;
-  const pattern = /\$\$\$.*?\$\$\$[ \t]*?\n?/gs; // match all unescape blocks surrounded by $$$
+  const pattern = /\$\$\$.*?\$\$\$[ \t]*\n?/gs; // match all unescape blocks surrounded by $$$
   const unescapeBlocks = fileContents.match(pattern);
   if( unescapeBlocks ) {
     for (let block of unescapeBlocks) {
@@ -199,12 +199,12 @@ function unescapeBlocks(fileContentString) {
 */
 function formatFrontMatter(fileId, fileContentString) {
   let fileContents = fileContentString;
-  const pattern = /---.*?---/s;
+  const pattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
   const frontMatterBlocks = fileContents.match(pattern);
-  const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit`
+  const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit\n`
   if( frontMatterBlocks ) {
     let frontMatterBlockFormatted = frontMatterBlocks[0]
-      .replace(`---`, `---\n${frontMatterPropsToAdd}\n`); 
+      .replace(/^---[ \t]*\n/sm, `---\n${frontMatterPropsToAdd}\n`); // replace the opening --- line of the block
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
     fileContents = `---\n${frontMatterPropsToAdd}\n---\n` + fileContentString; // if there's no existing block, add one
@@ -245,10 +245,6 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
       console.log("Skipped empty file", filePath)
     }
   });
-}
-
-function log(args) {
-  console.log(args);
 }
 
 main({
