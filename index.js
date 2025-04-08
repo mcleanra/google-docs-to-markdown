@@ -179,14 +179,14 @@ async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
 */
 function unescapeBlocks(fileContentString) {
   let fileContents = fileContentString;
-  const pattern = /\$\$\$.*?\$\$\$\h*?\n?/gs; // match all unescape blocks surrounded by $$$
+  const pattern = /\$\$\$.*?\$\$\$[ \t]*?\n?/gs; // match all unescape blocks surrounded by $$$
   const unescapeBlocks = fileContents.match(pattern);
   if( unescapeBlocks ) {
     for (let block of unescapeBlocks) {
       let unescapedBlock = block
         .replace(/^\$\$\$.*?$\n?/gm, ``) // remove any line that starts with $$$ first
         .replace(/\\/g, ``) // remove all the escaping \ that google has inserted
-        .replace(/\h*$/gm, ``); // remove the whitespace that google has inserted at the end of each line
+        .replace(/[ \t]*$/gm, ``); // remove the horizontal whitespace that google has inserted at the end of each line
       fileContents = fileContents.replace(block, unescapedBlock);
       console.log(unescapedBlock);
     }
@@ -245,6 +245,10 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
       console.log("Skipped empty file", filePath)
     }
   });
+}
+
+function log(args) {
+  console.log(args);
 }
 
 main({
