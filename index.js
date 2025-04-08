@@ -195,6 +195,8 @@ function unescapeBlocks(fileContentString) {
 }
 
 /*
+* If there's no front matter block, create one
+* If there's a front matter block in the document, discard everything before it
 * Insert the Google Doc Id into the front matter block so our "Edit this page" links work correctly
 */
 function formatFrontMatter(fileId, fileContentString) {
