@@ -185,6 +185,7 @@ function unescapeBlocks(fileContentString) {
     for (let block of unescapeBlocks) {
       let unescapedBlock = block
         .replace(/\\/g, ``) // remove all the escaping \ that google has inserted
+        .replace(/\s+$/gm, ``) // remove the whitespace that google has added at the end of each line
         .replace(/^\$\$\$.*?$\n?/gm, ``); // remove any line that starts with $$$
       fileContents = fileContents.replace(block, unescapedBlock);
       console.log(unescapedBlock);
