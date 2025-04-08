@@ -205,10 +205,19 @@ function formatFrontMatter(fileId, fileContentString) {
   const frontMatterBlocks = fileContents.match(pattern);
   const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit`
   if( frontMatterBlocks ) {
+    // if the first front matter block is not at the top of the file, discard any content before it
+    if( fileContents.indexOf(frontMatterBlocks[0]) > 0 ) {
+      let fileContentsArray = fileContents.split(frontMatterBlocks[0]);
+      fileContentsArray = fileContentsArray.shift();
+      fileContents = fileContentsArray.join(``);
+    }
+
+    // insert our props into the first existing block
     let frontMatterBlockFormatted = frontMatterBlocks[0]
       .replace(/^---[ \t]*\n/sm, `---\n${frontMatterPropsToAdd}\n`); // replace the opening --- line of the block
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
+    // create a new block at the beginning of the file and insert our props
     fileContents = `---\n${frontMatterPropsToAdd}\n---\n` + fileContentString; // if there's no existing block, add one
   }
   return fileContents;
