@@ -201,7 +201,7 @@ function formatFrontMatter(fileId, fileContentString) {
   let fileContents = fileContentString;
   const pattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
   const frontMatterBlocks = fileContents.match(pattern);
-  const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit\n`
+  const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit`
   if( frontMatterBlocks ) {
     let frontMatterBlockFormatted = frontMatterBlocks[0]
       .replace(/^---[ \t]*\n/sm, `---\n${frontMatterPropsToAdd}\n`); // replace the opening --- line of the block
