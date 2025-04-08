@@ -207,8 +207,9 @@ function formatFrontMatter(fileId, fileContentString) {
   if( frontMatterBlocks ) {
     // if the first front matter block is not at the top of the file, discard any content before it
     if( fileContents.indexOf(frontMatterBlocks[0]) > 0 ) {
+      console.log(`Front matter not at head of file in ${fileId}`)
       let fileContentsArray = fileContents.split(frontMatterBlocks[0]);
-      fileContentsArray = fileContentsArray.shift();
+      fileContentsArray.shift();
       fileContents = fileContentsArray.join(``);
     }
 
