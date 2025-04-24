@@ -104,11 +104,7 @@ async function getFileContentsAsMarkdown(fileId, auth) {
         let text = await new Response(response.body).text();
         return text;
       }
-      throw new Error('Something went wrong while exporting this page as Markdown.');
-    })
-    .catch((error) => {
-      console.log(error)
-      return error;
+      throw new Error('Google could not export this page as Markdown.');
     });
 }
 
