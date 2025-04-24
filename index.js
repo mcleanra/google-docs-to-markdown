@@ -99,10 +99,16 @@ async function getFileContentsAsMarkdown(fileId, auth) {
     url: `https://docs.google.com/feeds/download/documents/export/Export?id=${fileId}&exportFormat=markdown`
   });
   return await fetch(request.url, {headers: request.headers})
-    .then(response => response.body)
-    .then(async body => {
-      let text = await new Response(body).text();
-      return text;
+    .then(async response => {
+      if (response.ok) {
+        let text = await new Response(response.body).text();
+        return text;
+      }
+      throw new Error('Something went wrong while exporting this page as Markdown.');
+    })
+    .catch((error) => {
+      console.log(error)
+      return error;
     });
 }
 
