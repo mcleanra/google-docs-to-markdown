@@ -186,6 +186,8 @@ function unescapeBlocks(fileContentString) {
       let unescapedBlock = block
         .replace(/^\$\$\$.*?$\n?/gm, ``) // remove any line that starts with $$$ first
         .replace(/\\/g, ``) // remove all the escaping \ that google has inserted
+        .replace(/’/g, `'`) // replace backwards single quotes that will throw webpack/mdx compiler errors
+        .replace(/”/g, `"`) // replace backwards single quotes that will throw webpack/mdx compiler errors
         .replace(/[ \t]*$/gm, ``); // remove the horizontal whitespace that google has inserted at the end of each line
       fileContents = fileContents.replace(block, unescapedBlock);
       console.log(unescapedBlock);
