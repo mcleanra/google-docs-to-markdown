@@ -119,7 +119,9 @@ function getFileContents({ drive, fileId }) {
 async function exportFiles({ drive, files, auth }) {
   return Promise.all(
     files.map(async (file) => {
-      console.log("Exporting", file.name);
+      const modifiedTime = Date.parse(file.modifiedTime);
+      const viewedByMeTime = Date.parse(file.viewedByMeTime);
+      console.log(`Exporting ${file.name} ${modifiedTime > viewedByMeTime ? "Recently updated!" : ""}`);
       let content = "";
       try {
         if( file.mimeType !== "application/vnd.google-apps.document" 
@@ -169,7 +171,7 @@ async function* listFilesRecursive({ drive, googleDriveFolderId, googleDriveQuer
 async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   const query = `'${googleDriveFolderId}' in parents`;
   const response = await drive.files.list({
-    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, mimeType, parents)",
+    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, viewedByMeTime, mimeType, parents)",
     orderBy: "modifiedTime desc",
     pageSize: 1000,
     q: googleDriveQuery ? `${query} and ((mimeType = 'application/vnd.google-apps.folder') or (${googleDriveQuery}))` : query
