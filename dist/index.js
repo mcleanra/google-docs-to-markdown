@@ -397757,45 +397757,47 @@ function getFileContents({ drive, fileId }) {
 }
 
 async function exportFiles({ drive, files, auth }) {
-  return Promise.all(
-    files.map(async (file) => {
-      const modifiedTime = Date.parse(file.modifiedTime);
-      const viewedByMeTime = Date.parse(file.viewedByMeTime);
-      console.log(`Exporting ${file.name} ${modifiedTime > viewedByMeTime ? "Recently updated!" : ""}`);
-      let content = "";
-      try {
-        if( file.mimeType !== "application/vnd.google-apps.document" 
-            && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
-            && file.fileExtension !== "json") {
-          // if it isn't a document type we're interested in, set content to empty so it gets skipped
-          content = "";
-        }
-        else if ( file.name.startsWith(`~`)) {
-          // skip any temporary files from word docs being edited
-          content = "";
-        }
-        else { 
-          // do the export
-          if( file.fileExtension === "json") {
-            // we want the raw content for any json file
-            const json = await getFileContents({drive, fileId: file.id});
-            content = JSON.stringify(json, null, 2);
-          } else {
-            // any other type, word docs and google docs can be exported as markdown
-            content = await getFileContentsAsMarkdown(file.id, auth);
-          }
-        }
-      } catch (err) {
-        console.log("Could not export", file.name);
-        console.log(err);
-      } finally {
-        return {
-          ...file,
-          content
+  const results = [];
+
+  for await (const file of files) {
+    const modifiedTime = Date.parse(file.modifiedTime);
+    const viewedByMeTime = Date.parse(file.viewedByMeTime);
+    console.log(`Exporting ${file.name} ${modifiedTime > viewedByMeTime ? "Recently updated!" : ""}`);
+    let content = "";
+    try {
+      if( file.mimeType !== "application/vnd.google-apps.document" 
+          && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+          && file.fileExtension !== "json") {
+        // if it isn't a document type we're interested in, set content to empty so it gets skipped
+        content = "";
+      }
+      else if ( file.name.startsWith(`~`)) {
+        // skip any temporary files from word docs being edited
+        content = "";
+      }
+      else { 
+        // do the export
+        if( file.fileExtension === "json") {
+          // we want the raw content for any json file
+          const json = await getFileContents({drive, fileId: file.id});
+          content = JSON.stringify(json, null, 2);
+        } else {
+          // any other type, word docs and google docs can be exported as markdown
+          content = await getFileContentsAsMarkdown(file.id, auth);
         }
       }
-    })
-  );
+    } catch (err) {
+      console.log("Could not export", file.name);
+      console.log(err);
+    } finally {
+      results.push({
+        ...file,
+        content
+      });
+    }
+  }
+  
+  return Promise.resolve(results);
 }
 
 async function* listFilesRecursive({ drive, googleDriveFolderId, googleDriveQuery }) {
