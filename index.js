@@ -123,20 +123,23 @@ async function exportFiles({ drive, files, auth }) {
         if( file.mimeType !== "application/vnd.google-apps.document" 
             && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
             && file.fileExtension !== "json") {
-          // if it isn't a word document or a json file, skip
+          // if it isn't a document type we're interested in, set content to empty so it gets skipped
           content = "";
         }
         else if ( file.name.startsWith(`~`)) {
-          // temporary files, skip
+          // skip any temporary files from word docs being edited
           content = "";
         }
-        else if( file.fileExtension === "json") {
-          // json files, get the raw content
-          const json = await getFileContents({drive, fileId: file.id});
-          content = JSON.stringify(json, null, 2);
-        } else {
-          // word docs and google docs can be exported as markdown
-          content = await getFileContentsAsMarkdown(file.id, auth);
+        else { 
+          // do the export
+          if( file.fileExtension === "json") {
+            // we want the raw content for any json file
+            const json = await getFileContents({drive, fileId: file.id});
+            content = JSON.stringify(json, null, 2);
+          } else {
+            // any other type, word docs and google docs can be exported as markdown
+            content = await getFileContentsAsMarkdown(file.id, auth);
+          }
         }
       } catch (err) {
         console.log("Could not export", file.name);
