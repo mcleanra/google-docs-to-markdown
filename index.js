@@ -199,7 +199,7 @@ function unescapeBlocks(fileContentString) {
         .replace(/”/g, `"`) // replace backwards single quotes that will throw webpack/mdx compiler errors
         .replace(/[ \t]*$/gm, ``); // remove the horizontal whitespace that google has inserted at the end of each line
       fileContents = fileContents.replace(block, unescapedBlock);
-      console.log(unescapedBlock);
+      // console.log(unescapedBlock);
     }
   }
   return fileContents;
