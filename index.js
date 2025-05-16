@@ -128,6 +128,7 @@ async function exportFiles({ drive, files, auth }) {
     try {
       if( file.mimeType !== "application/vnd.google-apps.document" 
           && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+          && file.mimeType !== "application/vnd.google-apps.shortcut"
           && file.fileExtension !== "json") {
         // if it isn't a document type we're interested in, set content to empty so it gets skipped
         content = "";
@@ -136,7 +137,16 @@ async function exportFiles({ drive, files, auth }) {
         // skip any temporary files from word docs being edited
         content = "";
       }
-      else { 
+      else if (file.mimeType === "application/vnd.google-apps.shortcut") {
+        // for shortcuts, export the data from the original file and set the mimeType to the original
+        if(file.shortcutDetails.targetMimeType === "application/vnd.google-apps.document" || file.shortcutDetails.targetMimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+          content = await getFileContentsAsMarkdown(file.shortcutDetails.targetId, auth);
+          file.mimeType = file.shortcutDetails.targetMimeType;
+        } else {
+          content = "";
+        }
+      }
+      else {
         // do the export
         if( file.fileExtension === "json") {
           // we want the raw content for any json file
@@ -174,7 +184,7 @@ async function* listFilesRecursive({ drive, googleDriveFolderId, googleDriveQuer
 async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   const query = `'${googleDriveFolderId}' in parents`;
   const response = await drive.files.list({
-    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, viewedByMeTime, mimeType, parents)",
+    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, viewedByMeTime, mimeType, parents, shortcutDetails)",
     orderBy: "modifiedTime desc",
     pageSize: 1000,
     q: googleDriveQuery ? `${query} and ((mimeType = 'application/vnd.google-apps.folder') or (${googleDriveQuery}))` : query

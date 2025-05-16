@@ -397744,7 +397744,8 @@ async function getFileContentsAsMarkdown(fileId, auth) {
         let text = await new Response(response.body).text();
         return text;
       }
-      throw new Error('Google could not export this page as Markdown.');
+      console.error(`${response.status}: ${response.statusText}`)
+      throw new Error(`Google could not export this file as Markdown.`);
     });
 }
 
@@ -397762,11 +397763,12 @@ async function exportFiles({ drive, files, auth }) {
   for await (const file of files) {
     const modifiedTime = Date.parse(file.modifiedTime);
     const viewedByMeTime = Date.parse(file.viewedByMeTime);
-    console.log(`Exporting ${file.name} ${modifiedTime > viewedByMeTime ? "Recently updated!" : ""}`);
+    console.log(`Exporting ${file.name} ${file.id} ${modifiedTime > viewedByMeTime ? "Recently updated!" : ""}`);
     let content = "";
     try {
       if( file.mimeType !== "application/vnd.google-apps.document" 
           && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+          && file.mimeType !== "application/vnd.google-apps.shortcut"
           && file.fileExtension !== "json") {
         // if it isn't a document type we're interested in, set content to empty so it gets skipped
         content = "";
@@ -397775,7 +397777,16 @@ async function exportFiles({ drive, files, auth }) {
         // skip any temporary files from word docs being edited
         content = "";
       }
-      else { 
+      else if (file.mimeType === "application/vnd.google-apps.shortcut") {
+        // for shortcuts, export the data from the original file and set the mimeType to the original
+        if(file.shortcutDetails.targetMimeType === "application/vnd.google-apps.document" || file.shortcutDetails.targetMimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+          content = await getFileContentsAsMarkdown(file.shortcutDetails.targetId, auth);
+          file.mimeType = file.shortcutDetails.targetMimeType;
+        } else {
+          content = "";
+        }
+      }
+      else {
         // do the export
         if( file.fileExtension === "json") {
           // we want the raw content for any json file
@@ -397813,7 +397824,7 @@ async function* listFilesRecursive({ drive, googleDriveFolderId, googleDriveQuer
 async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   const query = `'${googleDriveFolderId}' in parents`;
   const response = await drive.files.list({
-    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, viewedByMeTime, mimeType, parents)",
+    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, viewedByMeTime, mimeType, parents, shortcutDetails)",
     orderBy: "modifiedTime desc",
     pageSize: 1000,
     q: googleDriveQuery ? `${query} and ((mimeType = 'application/vnd.google-apps.folder') or (${googleDriveQuery}))` : query
@@ -397839,7 +397850,7 @@ function unescapeBlocks(fileContentString) {
         .replace(/”/g, `"`) // replace backwards single quotes that will throw webpack/mdx compiler errors
         .replace(/[ \t]*$/gm, ``); // remove the horizontal whitespace that google has inserted at the end of each line
       fileContents = fileContents.replace(block, unescapedBlock);
-      console.log(unescapedBlock);
+      // console.log(unescapedBlock);
     }
   }
   return fileContents;
