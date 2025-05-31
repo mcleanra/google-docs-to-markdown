@@ -123,7 +123,7 @@ async function exportFiles({ drive, files, auth }) {
   for await (const file of files) {
     const modifiedTime = Date.parse(file.modifiedTime);
     const viewedByMeTime = Date.parse(file.viewedByMeTime);
-    console.log(`Exporting ${file.name} ${file.id} ${modifiedTime > viewedByMeTime ? "Recently updated!" : ""}`);
+    console.log(`Exporting ${file.name}\t(${file.id})\t[${file.mimeType}] ${modifiedTime > viewedByMeTime ? "[Recently updated!]" : ""}`);
     let content = "";
     try {
       if( file.mimeType !== "application/vnd.google-apps.document" 
