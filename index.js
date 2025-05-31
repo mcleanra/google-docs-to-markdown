@@ -123,13 +123,14 @@ async function exportFiles({ drive, files, auth }) {
   for await (const file of files) {
     const modifiedTime = Date.parse(file.modifiedTime);
     const viewedByMeTime = Date.parse(file.viewedByMeTime);
-    console.log(`Exporting ${file.name}\t(${file.id})\t[${file.mimeType}] ${modifiedTime > viewedByMeTime ? "[Recently updated!]" : ""}`);
+    console.log(`Exporting ${file.name} (${file.id}) [${file.mimeType}] ${modifiedTime > viewedByMeTime ? "[Recently updated!]" : ""}`);
     let content = "";
     try {
       if( file.mimeType !== "application/vnd.google-apps.document" 
           && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
           && file.mimeType !== "application/vnd.google-apps.shortcut"
           && file.mimeType !== "application/vnd.google-apps.drive-sdk"
+          && file.mimeType !== "application/json") {
         // if it isn't a document type we're interested in, set content to empty so it gets skipped
         content = "";
       }
@@ -148,7 +149,7 @@ async function exportFiles({ drive, files, auth }) {
       }
       else {
         // do the export
-        if( file.fileExtension === "json") {
+        if( file.mimeType === "application/json") {
           // we want the raw content for any json file
           const json = await getFileContents({drive, fileId: file.id});
           content = JSON.stringify(json, null, 2);
@@ -184,7 +185,7 @@ async function* listFilesRecursive({ drive, googleDriveFolderId, googleDriveQuer
 async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   const query = `'${googleDriveFolderId}' in parents`;
   const response = await drive.files.list({
-    fields: "nextPageToken, files(id, name, fileExtension, createdTime, modifiedTime, viewedByMeTime, mimeType, parents, shortcutDetails)",
+    fields: "nextPageToken, files(id, name, createdTime, modifiedTime, viewedByMeTime, mimeType, parents, shortcutDetails)",
     orderBy: "modifiedTime desc",
     pageSize: 1000,
     q: googleDriveQuery ? `${query} and ((mimeType = 'application/vnd.google-apps.folder') or (${googleDriveQuery}))` : query
@@ -255,11 +256,11 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
     if( exportedFile.mimeType === "application/vnd.google-apps.document" ) {
       fileName = `${fileName}.md`;
     }
-    else if (exportedFile.fileExtension === "json") {
+    else if (exportedFile.mimeType === "application/json") {
       // don't change the file name
     }
-    else if( exportedFile.fileExtension ) {
-      fileName = fileName.replace(`.${exportedFile.fileExtension}`, ``);
+    else {
+      fileName = fileName.split('.').slice(0, -1).join('.');
       fileName = `${fileName}.md`;
     }
     const filePath = `${directories[parentFolderId]}/${fileName}`
