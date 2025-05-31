@@ -129,7 +129,7 @@ async function exportFiles({ drive, files, auth }) {
       if( file.mimeType !== "application/vnd.google-apps.document" 
           && file.mimeType !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
           && file.mimeType !== "application/vnd.google-apps.shortcut"
-          && file.fileExtension !== "json") {
+          && file.mimeType !== "application/vnd.google-apps.drive-sdk"
         // if it isn't a document type we're interested in, set content to empty so it gets skipped
         content = "";
       }
@@ -137,7 +137,7 @@ async function exportFiles({ drive, files, auth }) {
         // skip any temporary files from word docs being edited
         content = "";
       }
-      else if (file.mimeType === "application/vnd.google-apps.shortcut") {
+      else if (file.mimeType === "application/vnd.google-apps.shortcut" || file.mimeType === "application/vnd.google-apps.drive-sdk") {
         // for shortcuts, export the data from the original file and set the mimeType to the original
         if(file.shortcutDetails.targetMimeType === "application/vnd.google-apps.document" || file.shortcutDetails.targetMimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
           content = await getFileContentsAsMarkdown(file.shortcutDetails.targetId, auth);
