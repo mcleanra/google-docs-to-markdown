@@ -118,6 +118,24 @@ function getFileContents({ drive, fileId }) {
 }
 
 /*
+* Removes the slug from a block of front matter. Useful for Google drive shortcuts that result in duplicate
+* files in multiple places in the docs tree.
+*/
+function removeSlug(markdownString) {
+  let fileContents = markdownString;
+  const frontMatterPattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
+  const slugPattern = /slug:.*?\n/s; // select the slug line inside the front matter
+  const frontMatterBlocks = fileContents.match(frontMatterPattern);
+
+  if( frontMatterBlocks ) {
+    // remove the slug line
+    let frontMatterBlockFormatted = frontMatterBlocks[0].replace(slugPattern, ``);
+    fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
+  } 
+  return fileContents;
+}
+
+/*
 * Adds a head tag to the markdown to exclude a file from the search results.  Useful for Google drive shortcuts that result in duplicate
 * files in multiple places in the docs tree.
 *
@@ -126,7 +144,7 @@ function getFileContents({ drive, fileId }) {
 function addNoIndexHeadTag(markdownString) {
   let fileContents = markdownString;
   const noIndexTag = `\n<head><meta name="robots" content="noindex" /></head>\n`;
-  const pattern = /(---.*?---[ \t]*\n?)(\s*import.*?\n)*\s*/s; // select the first front matter block, import statements, and whitespace thereafter
+  const pattern = /(---.*?---[ \t]*\n?)(\n*import.*?\n)*\n*/s; // select the first front matter block, import statements, and whitespace thereafter
   const frontMatterBlocks = fileContents.match(pattern);
 
   if( frontMatterBlocks ) {
@@ -169,6 +187,7 @@ async function exportFiles({ drive, files, auth }) {
           content = unescapeBlocks(content);
           content = formatFrontMatter(file.id, content);
           content = addNoIndexHeadTag(content);
+          content = removeSlug(content)
           file.mimeType = file.shortcutDetails.targetMimeType;
         } else {
           content = "";
