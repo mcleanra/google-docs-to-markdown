@@ -142,6 +142,8 @@ async function exportFiles({ drive, files, auth }) {
         // for shortcuts, export the data from the original file and set the mimeType to the original
         if(file.shortcutDetails.targetMimeType === "application/vnd.google-apps.document" || file.shortcutDetails.targetMimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
           content = await getFileContentsAsMarkdown(file.shortcutDetails.targetId, auth);
+          content = unescapeBlocks(content);
+          content = formatFrontMatter(file.id, content);
           file.mimeType = file.shortcutDetails.targetMimeType;
         } else {
           content = "";
@@ -156,6 +158,8 @@ async function exportFiles({ drive, files, auth }) {
         } else {
           // any other type, word docs and google docs can be exported as markdown
           content = await getFileContentsAsMarkdown(file.id, auth);
+          content = unescapeBlocks(content);
+          content = formatFrontMatter(file.id, content);
         }
       }
     } catch (err) {
@@ -265,10 +269,6 @@ async function writeExportedFiles({ exportedFiles, directories, recursive, googl
     }
     const filePath = `${directories[parentFolderId]}/${fileName}`
     if( exportedFile.content !== "") {
-      if( fileName.endsWith(".md") ) {
-        exportedFile.content = unescapeBlocks(exportedFile.content);
-        exportedFile.content = formatFrontMatter(exportedFile.id, exportedFile.content);
-      }
       await fsPromises.writeFile(
         filePath,
         exportedFile.content
