@@ -397766,19 +397766,17 @@ function getFileContents({ drive, fileId }) {
 function addNoIndexHeadTag(markdownString) {
   let fileContents = markdownString;
   const noIndexTag = `<head><meta name="robots" content="noindex" /></head>`;
-  const unescapeBlockWithNoIndexTag = `\n$$$\n${noIndexTag}\n$$$\n`;
-  const pattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
+  const pattern = /(---.*?---[ \t]*\n?)(\s*import.*?\n)*/s; // select the first front matter block and any import statements
   const frontMatterBlocks = fileContents.match(pattern);
 
   if( frontMatterBlocks ) {
-    // insert the head tag after the first front matter block
+    // insert the head tag after the first front matter block and import statements
     let frontMatterBlockFormatted = frontMatterBlocks[0]
-      .concat(unescapeBlockWithNoIndexTag);
+      .concat(noIndexTag);
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } else {
     // insert the head tag at the beginning of the file
-    console.log(`There is no front matter block in ${fileId}`);
-    fileContents = unescapeBlockWithNoIndexTag.concat(markdownString);
+    fileContents = noIndexTag.concat(markdownString);
   }
   return fileContents;
 }
