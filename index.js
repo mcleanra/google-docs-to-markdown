@@ -125,8 +125,8 @@ function getFileContents({ drive, fileId }) {
 */
 function addNoIndexHeadTag(markdownString) {
   let fileContents = markdownString;
-  const noIndexTag = `<head><meta name="robots" content="noindex" /></head>`;
-  const pattern = /(---.*?---[ \t]*\n?)(\s*import.*?\n)*/s; // select the first front matter block and any import statements
+  const noIndexTag = `\n<head><meta name="robots" content="noindex" /></head>\n`;
+  const pattern = /(---.*?---[ \t]*\n?)(\s*import.*?\n)*\s*/s; // select the first front matter block, import statements, and whitespace thereafter
   const frontMatterBlocks = fileContents.match(pattern);
 
   if( frontMatterBlocks ) {
