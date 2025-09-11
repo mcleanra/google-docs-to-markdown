@@ -423289,12 +423289,12 @@ function getFileContents({ drive, fileId }) {
 */
 function removeSlug(markdownString) {
   let fileContents = markdownString;
-  const frontMatterPattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
-  const slugPattern = /slug:.*\n/s; // select the slug line inside the front matter
+  const frontMatterPattern = /(---.*?---[ \t]*\n?)(\n*import.*?\n)*\n*/s; // select the first front matter block, import statements, and whitespace thereafter
   const frontMatterBlocks = fileContents.match(frontMatterPattern);
-
+  
   if( frontMatterBlocks ) {
     // remove the slug line
+    const slugPattern = /slug:.*\n/s; // select the slug line inside the front matter
     let frontMatterBlockFormatted = frontMatterBlocks[0].replace(slugPattern, ``);
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } 
