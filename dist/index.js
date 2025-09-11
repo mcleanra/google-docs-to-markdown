@@ -423294,7 +423294,7 @@ function removeSlug(markdownString) {
   
   if( frontMatterBlocks ) {
     // remove the slug line
-    const slugPattern = /slug:.*\n/s; // select the slug line inside the front matter
+    const slugPattern = /slug:.*(\r\n|\n|\r)/gm; // select the slug line inside the front matter
     let frontMatterBlockFormatted = frontMatterBlocks[0].replace(slugPattern, ``);
     fileContents = fileContents.replace(frontMatterBlocks[0], frontMatterBlockFormatted);
   } 
