@@ -143,7 +143,7 @@ function removeSlug(markdownString) {
 */
 function addNoIndexHeadTag(markdownString) {
   let fileContents = markdownString;
-  const noIndexTag = `\n<head><meta name="robots" content="noindex" /></head>\n`;
+  const noIndexTag = `<head><meta name="robots" content="noindex" /></head>\n\n`;
   const pattern = /(---.*?---[ \t]*\n?)(\n*import.*?\n)*\n*/s; // select the first front matter block, import statements, and whitespace thereafter
   const frontMatterBlocks = fileContents.match(pattern);
 
