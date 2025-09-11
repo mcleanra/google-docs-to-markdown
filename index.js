@@ -124,7 +124,7 @@ function getFileContents({ drive, fileId }) {
 function removeSlug(markdownString) {
   let fileContents = markdownString;
   const frontMatterPattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
-  const slugPattern = /slug:.*?\n/s; // select the slug line inside the front matter
+  const slugPattern = /slug:.*\n/s; // select the slug line inside the front matter
   const frontMatterBlocks = fileContents.match(frontMatterPattern);
 
   if( frontMatterBlocks ) {
@@ -186,8 +186,8 @@ async function exportFiles({ drive, files, auth }) {
           content = await getFileContentsAsMarkdown(file.shortcutDetails.targetId, auth);
           content = unescapeBlocks(content);
           content = formatFrontMatter(file.id, content);
+          content = removeSlug(content);
           content = addNoIndexHeadTag(content);
-          content = removeSlug(content)
           file.mimeType = file.shortcutDetails.targetMimeType;
         } else {
           content = "";
