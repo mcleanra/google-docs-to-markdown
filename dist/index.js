@@ -423351,7 +423351,7 @@ async function exportFiles({ drive, files, auth }) {
         if(file.shortcutDetails.targetMimeType === "application/vnd.google-apps.document" || file.shortcutDetails.targetMimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
           content = await getFileContentsAsMarkdown(file.shortcutDetails.targetId, auth);
           content = unescapeBlocks(content);
-          content = formatFrontMatter(file.id, content);
+          content = formatFrontMatter(file, content);
           content = removeSlug(content);
           content = addNoIndexHeadTag(content);
           file.mimeType = file.shortcutDetails.targetMimeType;
@@ -423369,7 +423369,7 @@ async function exportFiles({ drive, files, auth }) {
           // any other type, word docs and google docs can be exported as markdown
           content = await getFileContentsAsMarkdown(file.id, auth);
           content = unescapeBlocks(content);
-          content = formatFrontMatter(file.id, content);
+          content = formatFrontMatter(file, content);
         }
       }
     } catch (err) {
@@ -423396,10 +423396,13 @@ async function* listFilesRecursive({ drive, googleDriveFolderId, googleDriveQuer
   }
 }
 
+/*
+* Fields available here: https://developers.google.com/workspace/drive/api/reference/rest/v3/files#File
+*/
 async function listFiles({ drive, googleDriveFolderId, googleDriveQuery }) {
   const query = `'${googleDriveFolderId}' in parents`;
   const response = await drive.files.list({
-    fields: "nextPageToken, files(id, name, createdTime, modifiedTime, viewedByMeTime, mimeType, parents, shortcutDetails)",
+    fields: "nextPageToken, files(id, name, createdTime, modifiedTime, viewedByMeTime, mimeType, parents, shortcutDetails, lastModifyingUser)",
     orderBy: "modifiedTime desc",
     pageSize: 1000,
     q: googleDriveQuery ? `${query} and ((mimeType = 'application/vnd.google-apps.folder') or (${googleDriveQuery}))` : query
@@ -423436,16 +423439,23 @@ function unescapeBlocks(fileContentString) {
 * If there's a front matter block in the document, discard everything before it
 * Insert the Google Doc Id into the front matter block so our "Edit this page" links work correctly
 */
-function formatFrontMatter(fileId, fileContentString) {
+function formatFrontMatter(fileObject, fileContentString) {
   let fileContents = fileContentString;
   const pattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
   const frontMatterBlocks = fileContents.match(pattern);
-  const frontMatterPropsToAdd = `google_docs_id: ${fileId}\ncustom_edit_url: https://docs.google.com/document/d/${fileId}/edit`
+  const frontMatterPropsToAdd = 
+    `google_docs_id: ${fileObject.id}
+    parent_folder_id: ${fileObject.parents[0]}
+    custom_edit_url: https://docs.google.com/document/d/${fileObject.id}/edit
+    custom_folder_url: https://drive.google.com/drive/folders/${fileObject.parents[0]}
+    last_update:
+      date: ${fileObject.modifiedTime}
+      author: ${fileObject.lastModifyingUser.displayName}`;
   if( frontMatterBlocks ) {
     let frontMatterIndex = fileContents.indexOf(frontMatterBlocks[0]);
     // if the first front matter block is not at the top of the file, discard any content before it
     if( frontMatterIndex > 0 ) {
-      console.log(`Front matter not at head of file in ${fileId}`);
+      console.log(`Front matter not at head of file in ${fileObject.id}`);
       fileContents = fileContents.slice(frontMatterIndex);
     }
     // insert our props into the first existing block
