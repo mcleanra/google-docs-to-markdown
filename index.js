@@ -1,6 +1,7 @@
 const fsPromises = require("fs/promises");
 const { google } = require("googleapis");
 const core = require("@actions/core");
+const dateFns = require("date-fns");
 
 async function main({ googleDriveFolderId, outputDirectoryPath, googleDriveQuery, recursive }) {
   const auth = new google.auth.GoogleAuth({
@@ -277,14 +278,14 @@ function formatFrontMatter(fileObject, fileContentString) {
   let fileContents = fileContentString;
   const pattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
   const frontMatterBlocks = fileContents.match(pattern);
-  const frontMatterPropsToAdd = 
-    `google_docs_id: ${fileObject.id}
-    parent_folder_id: ${fileObject.parents[0]}
-    custom_edit_url: https://docs.google.com/document/d/${fileObject.id}/edit
-    custom_folder_url: https://drive.google.com/drive/folders/${fileObject.parents[0]}
-    last_update:
-      date: ${fileObject.modifiedTime}
-      author: ${fileObject.lastModifyingUser.displayName}`;
+  const fileModifiedDate = dateFns.parseJSON(fileObject.modifiedTime);
+  const frontMatterPropsToAdd = `google_docs_id: ${fileObject.id}
+  parent_folder_id: ${fileObject.parents[0]}
+  custom_edit_url: https://docs.google.com/document/d/${fileObject.id}/edit
+  custom_folder_url: https://drive.google.com/drive/folders/${fileObject.parents[0]}
+  last_update:
+    date: ${dateFns.formatRelative(fileModifiedDate, new Date())}
+    author: ${fileObject.lastModifyingUser.emailAddress}`;
   if( frontMatterBlocks ) {
     let frontMatterIndex = fileContents.indexOf(frontMatterBlocks[0]);
     // if the first front matter block is not at the top of the file, discard any content before it
