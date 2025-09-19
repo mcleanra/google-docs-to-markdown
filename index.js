@@ -279,13 +279,7 @@ function formatFrontMatter(fileObject, fileContentString) {
   const pattern = /---.*?---[ \t]*\n?/s; // select the first front matter block
   const frontMatterBlocks = fileContents.match(pattern);
   const fileModifiedDate = dateFns.parseJSON(fileObject.modifiedTime);
-  const frontMatterPropsToAdd = `google_docs_id: ${fileObject.id}
-  parent_folder_id: ${fileObject.parents[0]}
-  custom_edit_url: https://docs.google.com/document/d/${fileObject.id}/edit
-  custom_folder_url: https://drive.google.com/drive/folders/${fileObject.parents[0]}
-  last_update:
-    date: ${dateFns.formatRelative(fileModifiedDate, new Date())}
-    author: ${fileObject.lastModifyingUser.emailAddress}`;
+  const frontMatterPropsToAdd = `google_docs_id: ${fileObject.id}\nparent_folder_id: ${fileObject.parents[0]}\ncustom_edit_url: https://docs.google.com/document/d/${fileObject.id}/edit\ncustom_folder_url: https://drive.google.com/drive/folders/${fileObject.parents[0]}\nlast_update:\n\tdate: ${dateFns.formatRelative(fileModifiedDate, new Date())}\n\tauthor: ${fileObject.lastModifyingUser.emailAddress}`;
   if( frontMatterBlocks ) {
     let frontMatterIndex = fileContents.indexOf(frontMatterBlocks[0]);
     // if the first front matter block is not at the top of the file, discard any content before it
