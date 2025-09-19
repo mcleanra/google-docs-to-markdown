@@ -6,7 +6,6 @@
   },
   "dependencies": {
     "@actions/core": "^1.7.0",
-    "date-fns": "^4.1.0",
     "googleapis": "^68.0.0"
   },
   "devDependencies": {
